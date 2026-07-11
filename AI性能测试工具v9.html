@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.75">
+    <title>本地大语言模型推理性能测试工具</title>
+    <style>
+        html {
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
+            font-size: 15px;
+            overflow-x: hidden;
+        }
+
+        body {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            transform: scale(0.75);
+            transform-origin: top left;
+            width: 133.33vw;
+            min-height: 133.33vh;
+            overflow-x: hidden;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: inherit;
+        }
+
+        input,
+        button,
+        textarea,
+        select {
+            font-family: inherit;
+        }
+
+        .page-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 10px;
+        }
+
+        .page-header {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .page-title {
+            color: #000;
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .page-desc {
+            color: #555;
+            font-size: 24px;
+        }
+
+        .page-content {
+            display: flex;
+            gap: 15px;
+        }
+
+        .left-panel,
+        .center-panel,
+        .right-panel {
+            box-sizing: border-box;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .left-panel {
+            min-width: 470px;
+            max-width: 470px;
+            flex: 1;
+        }
+
+        .center-panel {
+            min-width: 1000px;
+            max-width: 1000px;
+            flex: 2;
+        }
+
+        .right-panel {
+            min-width: 1020px;
+            max-width: 1020px;
+            flex: 2;
+        }
+
+        .input-header {
+            padding: 8px 0;
+            border-radius: 4px;
+            background-color: #e6f7ff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .input-field {
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-field label {
+            padding: 4px 8px 4px 0;
+            white-space: nowrap;
+            font-size: 15px;
+        }
+
+        .input-field input[type="text"],
+        .input-field input[type="password"],
+        .input-field input[type="number"],
+        .input-field select {
+            box-sizing: border-box;
+            padding: 5px;
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .input-field select {
+            background-color: #fff;
+            cursor: pointer;
+        }
+
+        .input-field select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        #lengthTip {
+            padding: 4px 0;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .start-button,
+        .stop-button {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .start-button {
+            background-color: #28a745;
+        }
+
+        .start-button:hover {
+            background-color: #1e7e34;
+        }
+
+        .stop-button {
+            background-color: #dc3545;
+        }
+
+        .stop-button:hover {
+            background-color: #c82333;
+        }
+
+        .center-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .center-buttons button {
+            min-width: 120px;
+            padding: 10px 15px;
+            flex-grow: 1;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .center-buttons button:hover {
+            background-color: #0056b3;
+        }
+
+        .summary-display {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-bottom: 1.5px solid #e0e0e0;
+            border-radius: 8px 8px 0 0;
+            color: #000;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            flex-grow: 1;
+        }
+
+        .result-table {
+            width: 100%;
+            min-width: 500px;
+            border-collapse: collapse;
+        }
+
+        .result-table th {
+            padding: 8px;
+            border: 1px solid #ddd;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .result-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            font-size: 15px;
+            text-align: right;
+        }
+
+        .result-table th:last-child,
+        .result-table td:last-child {
+            min-width: 92px;
+            text-align: center;
+        }
+
+        .author-display {
+            padding: 15px 0;
+            color: #888;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .author-display .update-info {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        .author-display a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .chart-canvas {
+            width: 1000px !important;
+            height: 500px !important;
+        }
+
+        .detail-button {
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .detail-overlay {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .detail-dialog {
+            min-width: 800px;
+            max-width: 80%;
+            max-height: 80%;
+            overflow: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transform: scale(0.75);
+            transform-origin: center center;
+        }
+
+        .detail-header {
+            padding: 0 0 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-title {
+            color: #000;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .detail-close-button {
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
+            background-color: #dc3545;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .detail-close-button:hover {
+            background-color: #c82333;
+        }
+
+        .detail-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .detail-field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-field-label {
+            padding: 6px 0;
+            color: #000;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .detail-field-content {
+            padding: 0 10px;
+            background-color: #e9ecef;
+            color: #000;
+            font-size: 15px;
+        }
+
+        .detail-block-label {
+            padding: 6px 0;
+            color: #000;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .detail-block-content {
+            padding: 10px 15px;
+            border-left: 4px solid;
+            border-right: 4px solid;
+            border-radius: 6px;
+            background-color: #e9ecef;
+            color: #000;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            line-height: 1.2;
+            white-space: pre-wrap;
+        }
+
+        .system-prompt-block {
+            border-left-color: #ffc107;
+            border-right-color: #ffc107;
+        }
+
+        .user-prompt-block {
+            border-left-color: #007bff;
+            border-right-color: #007bff;
+        }
+
+        .output-block {
+            border-left-color: #28a745;
+            border-right-color: #28a745;
+        }
+
+        .alert-overlay {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        .alert-dialog {
+            min-width: 400px;
+            max-width: 40%;
+            max-height: 40%;
+            overflow: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+            text-align: center;
+            transform: scale(0.75);
+            transform-origin: center center;
+        }
+
+        .alert-header {
+            padding: 0 0 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .alert-title {
+            color: #000;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .alert-content {
+            padding: 10px 0;
+            background-color: #f8f9fa;
+            color: #000;
+            font-size: 15px;
+            line-height: 1.2;
+            white-space: pre-wrap;
+        }
+
+        .alert-confirm-button {
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .alert-confirm-button:hover {
+            background-color: #0056b3;
+        }
+
+        .compare-switch-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        
+        .compare-switch-label {
+            font-weight: bold;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .legend-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 3px;
+            display: inline-block;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-group label {
+            font-weight: bold;
+            font-size: 15px;
+            color: #333;
+            cursor: pointer;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+        
+        .checkbox-group input[type="checkbox"]:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .checkbox-group input[type="checkbox"]:disabled + label {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .checkbox-tip {
+            font-size: 12px;
+            color: #888;
+            font-style: italic;
+        }
+
+        .model-sync-tip {
+            font-size: 12px;
+            color: #28a745;
+            font-style: italic;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">本地大语言模型推理性能测试工具</h1>
+            <div class="page-desc">
+                用于测试本地大语言模型在不同输入长度下的推理速度，支持结果可视化与导出。
+            </div>
+        </div>
+        <div class="page-content">
+            <div class="left-panel">
+                <div>
+                    <div class="input-header">服务器信息</div>
+                    <div class="input-field">
+                        <label for="processor">处理器：</label>
+                        <input type="text" id="processor" value="EPYC 9684x">
+                    </div>
+                    <div class="input-field">
+                        <label for="mainboard">主板：</label>
+                        <input type="text" id="mainboard" value="MZ73-LM0">
+                    </div>
+                    <div class="input-field">
+                        <label for="memory">内存：</label>
+                        <input type="text" id="memory" value="DDR5 4800 1.5TB">
+                    </div>
+                    <div class="input-field">
+                        <label for="gpu">显卡：</label>
+                        <input type="text" id="gpu" value="NVIDIA RTX Pro 6000">
+                    </div>
+                    <div class="input-field">
+                        <label for="system">系统：</label>
+                        <input type="text" id="system" value="LinuxMint 24">
+                    </div>
+                </div>
+                <div>
+                    <div class="input-header">推理引擎信息</div>
+                    <div class="input-field">
+                        <label for="engineName">引擎名称：</label>
+                        <input type="text" id="engineName" value="Lvllm/Lsglang">
+                    </div>
+                    <div class="input-field">
+                        <label for="engineModelName">模型名称：</label>
+                        <input type="text" id="engineModelName" value="144 Cores">
+                        <span id="modelSyncTip" class="model-sync-tip" style="display:none;">✓ 已同步</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="input-header">接口信息</div>
+                    <div class="input-field">
+                        <label for="requestUrl">请求地址：</label>
+                        <input type="text" id="requestUrl" value="http://localhost:8080/v1/chat/completions">
+                    </div>
+                    <div class="input-field">
+                        <label for="modelName">模型名称：</label>
+                        <select id="modelName">
+                            <option value="">--- 请先获取模型列表 ---</option>
+                        </select>
+                        <button id="refreshModelsBtn" style="margin-left: 8px; padding: 4px 12px; border: 1px solid #007bff; border-radius: 4px; background-color: #007bff; color: #fff; font-size: 13px; cursor: pointer; white-space: nowrap;">刷新</button>
+                    </div>
+                    <div class="input-field">
+                        <label for="apiKey">请求密钥：</label>
+                        <input type="password" id="apiKey" placeholder="如果不需要，请留空">
+                    </div>
+                </div>
+                <div>
+                    <div class="input-header">测试信息</div>
+                    <div class="input-field">
+                        <label for="minInputLength">输入长度最小值：</label>
+                        <input type="number" id="minInputLength" value="128">
+                    </div>
+                    <div class="input-field">
+                        <label for="maxInputLength">输入长度最大值：</label>
+                        <input type="number" id="maxInputLength" value="65536">
+                    </div>
+                    <div class="input-field">
+                        <label for="step">输入长度步长：</label>
+                        <input type="number" id="step" value="2">
+                    </div>
+                    <div class="input-field">
+                        <label for="maxOutputLength">输出长度：</label>
+                        <input type="number" id="maxOutputLength" value="128">
+                    </div>
+                    <div class="input-field">
+                        <label for="structureLength">模型结构长度：</label>
+                        <input type="number" id="structureLength" value="16" placeholder="建议填写，常见值为 4">
+                    </div>
+                    <div class="input-field">
+                        <label for="specInfo">测试环境备注：</label>
+                        <input type="text" id="specInfo" placeholder="如未开启推测解码则留空；若开启可填: NEXTN, steps=3">
+                    </div>
+                    <div id="lengthTip">
+                        输入长度 = 系统提示词长度 + 用户提示词长度 + 模型结构长度
+                    </div>
+                </div>
+            </div>
+            <div class="center-panel">
+                <div>
+                    <button id="startButton" class="start-button">开始测试</button>
+                </div>
+                <div class="center-buttons">
+                    <button id="downloadChartButton">下载折线图</button>
+                    <button id="downloadCsvButton">下载 CSV 文件</button>
+                    <button id="downloadMarkdownButton">下载 Markdown 文件</button>
+                </div>
+                <div class="table-container">
+                    <div id="summaryDisplay" class="summary-display"></div>
+                    <table id="resultTable" class="result-table">
+                        <thead>
+                            <tr>
+                                <th>输入长度</th>
+                                <th>预填充耗时（ms）</th>
+                                <th>预填充速度（token/s）</th>
+                                <th>输出长度</th>
+                                <th>输出耗时（ms）</th>
+                                <th>输出速度（token/s）</th>
+                                <th>详细信息</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="authorDisplay" class="author-display">
+                    本工具由 chaoshen999 开发，欢迎前往 <a href="https://github.com/chaoshen999" target="_blank">GitHub</a> 点个 ⭐
+                    支持一下！
+                    <div class="update-info">Update: 20260711 by CN0123</div>
+                </div>
+            </div>
+            <div class="right-panel">
+                <div class="compare-switch-container">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="showLastResult" checked>
+                        <label for="showLastResult">展示上次测试结果 (蓝色)</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="updateBenchmark">
+                        <label for="updateBenchmark">更新对比基准</label>
+                        <span class="checkbox-tip" id="updateBenchmarkTip"></span>
+                    </div>
+                </div>
+                
+                <div class="legend-container" id="chartLegend">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #ff6384;"></span>
+                        <span>本次测试 (红色)</span>
+                    </div>
+                    <div class="legend-item" id="lastResultLegend" style="display:none;">
+                        <span class="legend-color" style="background-color: #36a2eb;"></span>
+                        <span>上次测试 (蓝色)</span>
+                    </div>
+                </div>
+
+                <div>
+                    <canvas id="prefillChart" class="chart-canvas"></canvas>
+                    <canvas id="outputChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const words = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+        let isTesting = false;
+        let testStartTime = null;
+        let testResults = [];
+        let lastTestResults = [];
+        let abortController = null;
+        let cachedModelList = [];
+        // 【关键修改】跟踪用户是否主动更新过基准
+        let benchmarkWasUpdatedByUser = false;
+
+        const startButton = document.getElementById('startButton');
+        const downloadChartButton = document.getElementById('downloadChartButton');
+        const downloadCsvButton = document.getElementById('downloadCsvButton');
+        const downloadMarkdownButton = document.getElementById('downloadMarkdownButton');
+        const refreshModelsBtn = document.getElementById('refreshModelsBtn');
+        const resultTableBody = document.querySelector('#resultTable tbody');
+        const prefillChartCanvas = document.getElementById('prefillChart');
+        const outputChartCanvas = document.getElementById('outputChart');
+        const summaryDisplayEl = document.getElementById('summaryDisplay');
+        const lengthTipEl = document.getElementById('lengthTip');
+        const showLastResultCheckbox = document.getElementById('showLastResult');
+        const updateBenchmarkCheckbox = document.getElementById('updateBenchmark');
+        const updateBenchmarkTip = document.getElementById('updateBenchmarkTip');
+        const lastResultLegend = document.getElementById('lastResultLegend');
+        const modelNameSelect = document.getElementById('modelName');
+        const engineModelNameInput = document.getElementById('engineModelName');
+        const modelSyncTip = document.getElementById('modelSyncTip');
+
+        startButton.addEventListener('click', () => {
+            if (isTesting) {
+                stopTest();
+            } else {
+                startTest();
+            }
+        });
+
+        downloadChartButton.addEventListener('click', downloadChart);
+        downloadCsvButton.addEventListener('click', downloadCsv);
+        downloadMarkdownButton.addEventListener('click', downloadMarkdown);
+        
+        showLastResultCheckbox.addEventListener('change', () => {
+            updateLastResultLegend();
+            drawChart();
+        });
+
+        updateBenchmarkCheckbox.addEventListener('change', () => {
+            if (updateBenchmarkCheckbox.checked) {
+                if (testResults.length > 0) {
+                    saveLastTestResults(testResults);
+                    // 【关键修改】标记用户已主动更新基准
+                    benchmarkWasUpdatedByUser = true;
+                    updateLastResultLegend();
+                    drawChart();
+                    updateBenchmarkTip.textContent = '✓ 基准已更新（本次测试结果）';
+                    updateBenchmarkTip.style.color = '#28a745';
+                } else {
+                    updateBenchmarkCheckbox.checked = false;
+                    updateBenchmarkTip.textContent = '请先完成测试';
+                    updateBenchmarkTip.style.color = '#dc3545';
+                    showAlert('请先完成一次测试，然后再勾选此选项以保存当前结果为对比基准。', '提示');
+                }
+            } else {
+                updateBenchmarkTip.textContent = '基准保留在缓存中';
+                updateBenchmarkTip.style.color = '#888';
+            }
+        });
+
+        modelNameSelect.addEventListener('change', () => {
+            syncModelNameToEngine();
+        });
+
+        refreshModelsBtn.addEventListener('click', fetchModelList);
+
+        document.getElementById('requestUrl').addEventListener('change', () => {
+            setTimeout(fetchModelList, 500);
+        });
+
+        updateSummaryDisplay();
+
+        ['processor', 'mainboard', 'memory', 'gpu', 'system', 'engineName', 'engineModelName'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', updateSummaryDisplay);
+            }
+        });
+
+        window.addEventListener('load', () => {
+            const saved = getLastTestResults();
+            if (saved.length > 0) {
+                lastTestResults = saved;
+                // 【关键修改】页面加载时，基准来自缓存，不是用户主动更新的
+                benchmarkWasUpdatedByUser = false;
+                updateBenchmarkTip.textContent = '有缓存的基准数据';
+                updateBenchmarkTip.style.color = '#28a745';
+                updateLastResultLegend();
+                drawChart();
+            } else {
+                updateBenchmarkTip.textContent = '完成测试后可保存为基准';
+                updateBenchmarkTip.style.color = '#888';
+            }
+            
+            setTimeout(fetchModelList, 1000);
+        });
+
+        function syncModelNameToEngine() {
+            const selectedModel = modelNameSelect.value;
+            if (!selectedModel) {
+                return;
+            }
+
+            let coresInfo = '144 Cores';
+            
+            const modelInfo = cachedModelList.find(m => {
+                const modelId = typeof m === 'string' ? m : (m.id || m.model || '');
+                return modelId === selectedModel;
+            });
+
+            if (modelInfo && typeof modelInfo === 'object') {
+                if (modelInfo.owned_by) {
+                    const ownedBy = modelInfo.owned_by.toLowerCase();
+                    if (ownedBy.includes('gpu')) {
+                        const gpuMatch = ownedBy.match(/(\d+)\s*gpu/);
+                        if (gpuMatch) {
+                            const gpuCount = parseInt(gpuMatch[1]);
+                            coresInfo = `${gpuCount * 80} Cores`;
+                        }
+                    }
+                }
+                
+                if (modelInfo.id || modelInfo.model) {
+                    const modelId = (modelInfo.id || modelInfo.model).toLowerCase();
+                    const coresMatch = modelId.match(/(\d+)\s*(?:core|gpu|card)/);
+                    if (coresMatch) {
+                        const num = parseInt(coresMatch[1]);
+                        if (coresMatch[0].includes('gpu') || coresMatch[0].includes('card')) {
+                            coresInfo = `${num * 80} Cores`;
+                        } else {
+                            coresInfo = `${num} Cores`;
+                        }
+                    }
+                }
+
+                if (modelInfo.extra_info || modelInfo.metadata) {
+                    const extra = modelInfo.extra_info || modelInfo.metadata;
+                    if (extra.tensor_parallel_size) {
+                        const tp = parseInt(extra.tensor_parallel_size);
+                        coresInfo = `${tp * 80} Cores`;
+                    }
+                }
+            }
+
+            engineModelNameInput.value = `${selectedModel} ${coresInfo}`;
+            
+            modelSyncTip.style.display = 'inline';
+            setTimeout(() => {
+                modelSyncTip.style.display = 'none';
+            }, 2000);
+
+            updateSummaryDisplay();
+
+            console.log('模型名称已同步:', engineModelNameInput.value);
+        }
+
+        async function fetchModelList() {
+            const requestUrl = document.getElementById('requestUrl').value.trim();
+            const apiKey = document.getElementById('apiKey').value;
+
+            if (!requestUrl) {
+                updateModelSelect([]);
+                return;
+            }
+
+            refreshModelsBtn.textContent = '获取中...';
+            refreshModelsBtn.disabled = true;
+            refreshModelsBtn.style.opacity = '0.7';
+
+            try {
+                let modelsUrl;
+                
+                if (requestUrl.endsWith('/v1/chat/completions')) {
+                    modelsUrl = requestUrl.replace('/v1/chat/completions', '/v1/models');
+                } else if (requestUrl.endsWith('/chat/completions')) {
+                    modelsUrl = requestUrl.replace('/chat/completions', '/models');
+                } else if (requestUrl.includes('/v1/')) {
+                    const base = requestUrl.substring(0, requestUrl.indexOf('/v1/') + 3);
+                    modelsUrl = base + 'models';
+                } else {
+                    const base = requestUrl.replace(/\/+$/, '');
+                    modelsUrl = base + '/v1/models';
+                }
+
+                console.log('请求模型列表:', modelsUrl);
+
+                const headers = {};
+                if (apiKey && apiKey.trim()) {
+                    headers['Authorization'] = `Bearer ${apiKey.trim()}`;
+                }
+
+                const response = await fetch(modelsUrl, {
+                    method: 'GET',
+                    headers: headers,
+                    signal: AbortSignal.timeout(10000)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                let modelList = [];
+                let modelDetails = [];
+                
+                if (data && data.data && Array.isArray(data.data)) {
+                    modelDetails = data.data;
+                    modelList = data.data.map(item => {
+                        if (typeof item === 'string') return item;
+                        return item.id || item.model || '';
+                    }).filter(Boolean);
+                } else if (Array.isArray(data)) {
+                    modelDetails = data;
+                    modelList = data.map(item => {
+                        if (typeof item === 'string') return item;
+                        return item.id || item.model || '';
+                    }).filter(Boolean);
+                } else if (data && typeof data === 'object') {
+                    const possibleKeys = ['models', 'list', 'items', 'result'];
+                    for (const key of possibleKeys) {
+                        if (Array.isArray(data[key])) {
+                            modelDetails = data[key];
+                            modelList = data[key].map(item => {
+                                if (typeof item === 'string') return item;
+                                return item.id || item.model || '';
+                            }).filter(Boolean);
+                            if (modelList.length > 0) break;
+                        }
+                    }
+                }
+
+                modelList = [...new Set(modelList)].sort((a, b) => a.localeCompare(b));
+                
+                cachedModelList = modelDetails;
+
+                updateModelSelect(modelList);
+
+                if (modelList.length > 0) {
+                    modelNameSelect.value = modelList[0];
+                    syncModelNameToEngine();
+                    console.log('成功获取模型列表:', modelList.length, '个模型，已选择:', modelList[0]);
+                } else {
+                    console.log('成功获取模型列表，但列表为空');
+                }
+
+            } catch (error) {
+                console.error('获取模型列表失败:', error);
+                
+                if (modelNameSelect.options.length <= 1) {
+                    while (modelNameSelect.options.length > 0) {
+                        modelNameSelect.remove(0);
+                    }
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = `获取失败：${getErrorMessage(error)}`;
+                    option.disabled = true;
+                    option.selected = true;
+                    modelNameSelect.appendChild(option);
+                }
+                
+                showAlert(`获取模型列表失败：${getErrorMessage(error)}`, '提示');
+            } finally {
+                refreshModelsBtn.textContent = '刷新';
+                refreshModelsBtn.disabled = false;
+                refreshModelsBtn.style.opacity = '1';
+            }
+        }
+
+        function getErrorMessage(error) {
+            if (error.name === 'TimeoutError') {
+                return '请求超时，请检查服务地址';
+            }
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                return '请确认服务已启动且地址正确';
+            }
+            if (error.message.includes('HTTP 404')) {
+                return '服务器不支持模型列表接口（404）';
+            }
+            if (error.message.includes('HTTP 401') || error.message.includes('HTTP 403')) {
+                return '认证失败，请检查 API Key（如需密钥）';
+            }
+            return error.message || '未知错误';
+        }
+
+        function updateModelSelect(modelList) {
+            const currentValue = modelNameSelect.value;
+            
+            while (modelNameSelect.options.length > 0) {
+                modelNameSelect.remove(0);
+            }
+
+            if (!modelList || modelList.length === 0) {
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '--- 没有可用的模型 ---';
+                defaultOption.disabled = true;
+                defaultOption.selected = true;
+                modelNameSelect.appendChild(defaultOption);
+                return;
+            }
+
+            modelList.forEach(modelId => {
+                const option = document.createElement('option');
+                option.value = modelId;
+                option.textContent = modelId;
+                modelNameSelect.appendChild(option);
+            });
+
+            if (currentValue && modelList.includes(currentValue)) {
+                modelNameSelect.value = currentValue;
+            }
+        }
+
+        function updateLastResultLegend() {
+            const hasLastResults = lastTestResults && lastTestResults.length > 0;
+            const shouldShow = showLastResultCheckbox.checked && hasLastResults;
+            lastResultLegend.style.display = shouldShow ? 'flex' : 'none';
+        }
+
+        console.log("本工具由 chaoshen999 开发，欢迎前往 https://github.com/chaoshen999 点个 ⭐ 支持一下！");
+
+        async function startTest() {
+            // 【关键修改】测试开始时，根据基准来源更新提示文本
+            if (lastTestResults && lastTestResults.length > 0) {
+                if (benchmarkWasUpdatedByUser) {
+                    // 用户主动更新过基准
+                    updateBenchmarkTip.textContent = '✓ 基准已更新（上次测试结果）';
+                    updateBenchmarkTip.style.color = '#28a745';
+                } else {
+                    // 基准来自缓存，用户未主动更新
+                    updateBenchmarkTip.textContent = '基准来自之前的测试';
+                    updateBenchmarkTip.style.color = '#007bff';
+                }
+            }
+
+            // 【关键修改】测试开始时禁用复选框，防止测试中误操作
+            updateBenchmarkCheckbox.disabled = true;
+            showLastResultCheckbox.disabled = true;
+
+            startButton.textContent = '停止测试';
+            startButton.classList.add('stop-button');
+            resultTableBody.innerHTML = '';
+            clearChart();
+
+            isTesting = true;
+            testStartTime = new Date();
+            testResults = [];
+
+            const requestUrl = document.getElementById('requestUrl').value;
+            const modelName = document.getElementById('modelName').value;
+            const apiKey = document.getElementById('apiKey').value;
+            const minInputLength = parseInt(document.getElementById('minInputLength').value);
+            const maxInputLength = parseInt(document.getElementById('maxInputLength').value);
+            const step = parseInt(document.getElementById('step').value);
+            const maxOutputLength = parseInt(document.getElementById('maxOutputLength').value);
+            const structureLengthInput = document.getElementById('structureLength');
+            const structureLength = structureLengthInput.value === '' ? 0 : parseInt(structureLengthInput.value);
+
+            if (!requestUrl || !modelName || isNaN(minInputLength) || isNaN(maxInputLength) || isNaN(step) || isNaN(maxOutputLength) || isNaN(structureLength)) {
+                showAlert('请填写接口信息和测试信息。');
+                stopTest();
+                return;
+            }
+            if (minInputLength <= 0 || maxInputLength < minInputLength || step <= 0 || maxOutputLength <= 0 || structureLength < 0) {
+                showAlert('请填写合理的测试信息。');
+                stopTest();
+                return;
+            }
+
+            if (minInputLength < 20) {
+                showAlert('输入长度最小值需要大于等于 20。');
+                stopTest();
+                return;
+            }
+
+            if (maxOutputLength < 3) {
+                showAlert('输出长度需要大于等于 3。');
+                stopTest();
+                return;
+            }
+
+            try {
+                const systemPrompt = generateSystemPrompt();
+                const userPrompt = generateUserPrompt(10);
+                const headers = { 'Content-Type': 'application/json' };
+                if (apiKey) {
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                }
+                const requestBody = JSON.stringify({
+                    model: modelName,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    max_tokens: 3,
+                    temperature: 0,
+                    top_p: 0.1,
+                    stream: true
+                });
+                const response = await fetch(requestUrl, {
+                    method: 'POST',
+                    headers: headers,
+                    body: requestBody
+                });
+                if (response.body && response.body.getReader) {
+                    const reader = response.body.getReader();
+                    while (true) {
+                        const { done } = await reader.read();
+                        if (done) break;
+                    }
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (e) {
+                // 忽略预热错误
+            }
+
+            for (let inputLength = minInputLength; inputLength <= maxInputLength; inputLength *= step) {
+                console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+                console.log(logTime(), '输入长度：', inputLength);
+
+                if (!isTesting) {
+                    return;
+                }
+
+                let testRowData = {};
+                let serverCompletionTokens = 0;
+                let output = '';
+
+                let requestTime = undefined;
+                let responseTime = undefined;
+                let firstTokenTime = undefined;
+                let outputFinishTime = undefined;
+
+                let prefillTime = undefined;
+                let prefillSpeed = undefined;
+                let outputLength = undefined;
+                let outputTime = undefined;
+                let outputSpeed = undefined;
+                let actualOutputTokens = 0;  // 实际接收到的Token数（优先使用服务器返回值，否则用估算值）
+                let ttft = 0;  // Time To First Token（首Token延迟，毫秒）
+
+                const systemPrompt = generateSystemPrompt();
+                const systemPromptLength = countTokensByRule(systemPrompt);
+
+                const userPromptLength = inputLength - systemPromptLength - structureLength;
+                const userPrompt = generateUserPrompt(userPromptLength);
+
+                try {
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (apiKey) {
+                        headers['Authorization'] = `Bearer ${apiKey}`;
+                    }
+                    const requestBody = JSON.stringify({
+                        model: modelName,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: userPrompt }
+                        ],
+                        max_tokens: maxOutputLength,
+                        temperature: 0,
+                        top_p: 0.1,
+                        stream: true
+                    });
+
+                    abortController = new AbortController();
+                    const signal = abortController.signal;
+
+                    requestTime = performance.now();
+                    console.log(logTime(), '发送请求的时间：', formatTime(requestTime));
+
+                    const response = await fetch(requestUrl, {
+                        method: 'POST',
+                        headers: headers,
+                        body: requestBody,
+                        signal: signal
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP 请求发生错误，状态码：${response.status}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');
+                    let buffer = '';
+
+                    while (true) {
+                        console.log('==================================================');
+
+                        const { done, value } = await reader.read();
+
+                        responseTime = performance.now();
+                        console.log(logTime(), '接收响应的时间：', formatTime(responseTime));
+                        console.log(logTime(), '数据流状态：', { done, hasValue: !!value, valueLength: value?.length });
+
+                        if (done) {
+                            console.log(logTime(), 'done');
+
+                            if (!outputFinishTime) {
+                                outputFinishTime = responseTime;
+                                console.log(logTime(), '输出结束的时间：', formatTime(outputFinishTime));
+                            }
+                            break;
+                        }
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop();
+
+                        for (const line of lines) {
+                            console.log(logTime(), '数据流内容：', line);
+
+                            if (line.trim() === '') {
+                                continue;
+                            }
+                            if (!line.startsWith('data:')) {
+                                continue;
+                            }
+
+                            const data = line.substring(5).trim();
+                            if (data === '[DONE]') {
+                                console.log(logTime(), '[DONE]');
+
+                                outputFinishTime = responseTime;
+                                console.log(logTime(), '输出结束的时间：', formatTime(outputFinishTime));
+                                break;
+                            }
+
+                            const json = JSON.parse(data);
+                            if (json.choices && json.choices[0] && json.choices[0].delta) {
+                                const delta = json.choices[0].delta;
+                                const contentChunk = delta.content || delta.reasoning_content || delta.reasoning;
+
+                                if (contentChunk) {
+                                    output += contentChunk;
+
+                                    if (!firstTokenTime) {
+                                        firstTokenTime = responseTime;
+                                        console.log(logTime(), '接收到首字的时间：', formatTime(firstTokenTime));
+                                    }
+                                }
+                            }
+                            if (json.usage) {
+                                if (json.usage.completion_tokens) {
+                                    serverCompletionTokens = json.usage.completion_tokens;
+                                }
+                            }
+                        }
+                    }
+
+                    prefillTime = firstTokenTime - requestTime;
+                    outputTime = outputFinishTime - firstTokenTime;
+                    ttft = prefillTime;  // TTFT = 首Token延迟 = 预填充耗时
+
+                    // Token计数：优先使用服务器返回的 completion_tokens
+                    // fallback：对完整输出文本使用 countTokensByRule 精确估算（不再流式逐字符估算）
+                    if (serverCompletionTokens > 0) {
+                        actualOutputTokens = serverCompletionTokens;
+                    } else {
+                        actualOutputTokens = Math.max(1, countTokensByRule(output));
+                    }
+
+                    // 输出长度列：填入用户配置的目标输出长度（保持原样）
+                    outputLength = maxOutputLength;
+
+                    prefillSpeed = prefillTime > 0 ? (inputLength / (prefillTime / 1000)).toFixed(2) : 'N/A';
+                    // 输出速度：使用实际接收到的 Token 数计算（修复推测解码场景下速度虚高问题）
+                    outputSpeed = outputTime > 0 ? (actualOutputTokens / (outputTime / 1000)).toFixed(2) : 'N/A';
+
+                    testRowData = {
+                        inputLength: inputLength,
+                        prefillTime: prefillTime.toFixed(2),
+                        prefillSpeed: prefillSpeed,
+                        outputLength: outputLength,
+                        outputTime: outputTime.toFixed(2),
+                        outputSpeed: outputSpeed,
+                        actualOutputTokens: actualOutputTokens,
+                        ttft: ttft.toFixed(2),
+                        systemPrompt: systemPrompt,
+                        systemPromptLength: systemPromptLength,
+                        userPrompt: userPrompt,
+                        userPromptLength: userPromptLength,
+                        output: output,
+                        error: false
+                    };
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        console.error(logTime(), error);
+                    } else {
+                        console.error(logTime(), error);
+
+                        let errorMessage = '未知错误';
+                        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                            errorMessage = '网络连接失败，请检查服务器地址和网络连接';
+                        } else if (error.message.includes('Failed to fetch')) {
+                            errorMessage = '无法连接到服务器，请检查服务器是否运行';
+                        } else if (error.message.includes('Unexpected token')) {
+                            errorMessage = '服务器返回的数据格式错误';
+                        } else if (error.message.includes('timeout')) {
+                            errorMessage = '请求超时，请检查服务器响应时间';
+                        }
+
+                        testRowData = {
+                            inputLength: inputLength,
+                            prefillTime: 0,
+                            prefillSpeed: 0,
+                            outputLength: 0,
+                            outputTime: 0,
+                            outputSpeed: 0,
+                            actualOutputTokens: 0,
+                            ttft: '0.00',
+                            systemPrompt: systemPrompt || '',
+                            systemPromptLength: systemPromptLength || 0,
+                            userPrompt: userPrompt || '',
+                            userPromptLength: userPromptLength || 0,
+                            output: '',
+                            error: true,
+                            errorMessage: errorMessage
+                        };
+                    }
+                }
+
+                const row = resultTableBody.insertRow();
+                row.insertCell().textContent = testRowData.inputLength;
+                row.insertCell().textContent = testRowData.error ? '错误' : testRowData.prefillTime;
+                row.insertCell().textContent = testRowData.error ? '错误' : testRowData.prefillSpeed;
+                row.insertCell().textContent = testRowData.error ? '错误' : testRowData.outputLength;
+                row.insertCell().textContent = testRowData.error ? '错误' : testRowData.outputTime;
+                row.insertCell().textContent = testRowData.error ? '错误' : testRowData.outputSpeed;
+
+                const detailCell = row.insertCell();
+                const detailButton = document.createElement('button');
+                detailButton.textContent = '详细信息';
+                detailButton.className = 'detail-button';
+                detailButton.onclick = () => showDetail(
+                    testRowData.inputLength,
+                    testRowData.systemPrompt,
+                    testRowData.systemPromptLength,
+                    testRowData.userPrompt,
+                    testRowData.userPromptLength,
+                    testRowData.output,
+                    testRowData.outputLength,
+                    testRowData.actualOutputTokens,
+                    testRowData.ttft
+                );
+                detailCell.appendChild(detailButton);
+
+                testResults.push(testRowData);
+
+                drawChart();
+
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            stopTest();
+        }
+
+        function stopTest() {
+            isTesting = false;
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+            }
+            startButton.textContent = '开始测试';
+            startButton.classList.remove('stop-button');
+            
+            // 【关键修改】测试结束后启用复选框
+            updateBenchmarkCheckbox.disabled = false;
+            showLastResultCheckbox.disabled = false;
+            
+            if (testResults.length > 0) {
+                updateBenchmarkCheckbox.checked = false;
+                // 【关键修改】测试完成后，如果复选框未勾选，重置 benchmarkWasUpdatedByUser
+                // 因为用户没有选择保存本次结果为基准，所以下次测试开始时不应显示"✓ 基准已更新"
+                benchmarkWasUpdatedByUser = false;
+                updateBenchmarkTip.textContent = '可勾选以保存本次结果为基准';
+                updateBenchmarkTip.style.color = '#007bff';
+            } else {
+                updateBenchmarkTip.textContent = '测试未完成，无数据可保存';
+                updateBenchmarkTip.style.color = '#dc3545';
+            }
+        }
+
+        function logTime() {
+            return `\x1b[34m[${new Date().toISOString()}]\x1b[0m`;
+        }
+
+        function formatTime(time) {
+            const fixed = time.toFixed(3);
+            const [intPart, fracPart] = fixed.split('.');
+            const intPartPadded = intPart.padStart(10, ' ');
+            return `${intPartPadded}.${fracPart}`;
+        }
+
+        function countTokensByRule(text) {
+            const specialApostropheWords = [
+                "'cause", "'em", "'kay", "'nother", "'round", "'scuse", "'sup", "'til"
+            ];
+
+            const oneTokenWords = [
+                "don't", "can't", "won't"
+            ];
+
+            const twoTokenWords = [
+                "I'm",
+                "we're", "you're", "they're",
+                "I've", "we've", "you've", "they've",
+                "I'd", "we'd", "you'd", "he'd", "she'd", "they'd",
+                "I'll", "we'll", "you'll", "he'll", "she'll", "they'll",
+                "isn't", "aren't", "wasn't", "weren't", "doesn't", "didn't", "hasn't", "haven't", "shouldn't", "wouldn't", "couldn't",
+                "it's", "he's", "she's", "that's", "there's", "who's"
+            ];
+
+            let tokens = [];
+            let t = text;
+
+            specialApostropheWords.forEach(word => {
+                let reg = new RegExp(word.replace("'", "\\'"), 'gi');
+                t = t.replace(reg, m => {
+                    tokens.push(m);
+                    return ' '.repeat(m.length);
+                });
+            });
+
+            oneTokenWords.forEach(word => {
+                let reg = new RegExp(word.replace("'", "\\'"), 'gi');
+                t = t.replace(reg, m => {
+                    tokens.push(m);
+                    return ' '.repeat(m.length);
+                });
+            });
+
+            twoTokenWords.forEach(word => {
+                let reg = new RegExp(word.replace("'", "\\'"), 'gi');
+                t = t.replace(reg, m => {
+                    const parts = m.split(/'/);
+                    tokens.push(parts[0]);
+                    tokens.push("'" + parts[1]);
+                    return ' '.repeat(m.length);
+                });
+            });
+
+            const enPunct = /[,.!?;:'"()\[\]{}]/;
+            const cnPunct = /[，。！？；：''""（）【】{}]/;
+
+            const isSeparator = (ch) => ch === ' ' || enPunct.test(ch) || cnPunct.test(ch) || ch === '\n' || ch === '\t' || ch === '\r';
+            const isDigit = (ch) => /[0-9]/.test(ch);
+
+            let buffer = '';
+            let i = 0;
+            while (i < t.length) {
+                const ch = t[i];
+
+                if (isSeparator(ch)) {
+                    if (buffer.length > 0) {
+                        tokens.push(buffer);
+                        buffer = '';
+                    }
+                    if (ch !== ' ' && ch !== '\t' && ch !== '\r') {
+                        tokens.push(ch);
+                    }
+                    i++;
+                    continue;
+                }
+
+                if (isDigit(ch)) {
+                    if (buffer.length > 0) {
+                        tokens.push(buffer);
+                        buffer = '';
+                    }
+                    tokens.push(ch);
+                    i++;
+                    continue;
+                }
+
+                buffer += ch;
+                i++;
+            }
+
+            if (buffer.length > 0) {
+                tokens.push(buffer);
+            }
+
+            tokens = tokens.filter(t => t && t.length > 0);
+            return tokens.length;
+        }
+
+        function generateSystemPrompt() {
+            return 'You are a assistant.';
+        }
+
+        function generateUserPrompt(length) {
+            const fixedPrompt = `\nRepeat the above content one hundred times.`;
+            const fixedPromptLength = countTokensByRule(fixedPrompt);
+
+            const needWordLength = length - fixedPromptLength;
+            let userPrompt = '';
+            for (let i = 0; i < needWordLength; i++) {
+                const randomWord = words[Math.floor(Math.random() * words.length)];
+                if (i > 0) {
+                    userPrompt += ' ';
+                }
+                userPrompt += randomWord;
+            }
+            userPrompt += fixedPrompt;
+            return userPrompt;
+        }
+
+        function updateLastResultLegend() {
+            const hasLastResults = lastTestResults && lastTestResults.length > 0;
+            const shouldShow = showLastResultCheckbox.checked && hasLastResults;
+            lastResultLegend.style.display = shouldShow ? 'flex' : 'none';
+        }
+
+        function drawChart() {
+            const currentInputLengths = testResults.map(r => r.inputLength);
+            const currentPrefillSpeeds = testResults.map(r => r.prefillSpeed);
+            const currentOutputSpeeds = testResults.map(r => r.outputSpeed);
+
+            let lastInputLengths = [];
+            let lastPrefillSpeeds = [];
+            let lastOutputSpeeds = [];
+            const showLast = showLastResultCheckbox.checked && lastTestResults.length > 0;
+
+            if (showLast) {
+                lastInputLengths = lastTestResults.map(r => r.inputLength);
+                lastPrefillSpeeds = lastTestResults.map(r => r.prefillSpeed);
+                lastOutputSpeeds = lastTestResults.map(r => r.outputSpeed);
+            }
+
+            const prefillDatasets = [
+                { data: currentPrefillSpeeds, xData: currentInputLengths, color: '#ff6384', label: '本次' }
+            ];
+            if (showLast) {
+                prefillDatasets.push({ data: lastPrefillSpeeds, xData: lastInputLengths, color: '#36a2eb', label: '上次' });
+            }
+
+            const outputDatasets = [
+                { data: currentOutputSpeeds, xData: currentInputLengths, color: '#ff6384', label: '本次' }
+            ];
+            if (showLast) {
+                outputDatasets.push({ data: lastOutputSpeeds, xData: lastInputLengths, color: '#36a2eb', label: '上次' });
+            }
+
+            drawLineChart(
+                prefillChartCanvas, 
+                prefillDatasets,
+                '预填充速度', 
+                '输入长度', 
+                '预填充速度（token/s）'
+            );
+
+            drawLineChart(
+                outputChartCanvas, 
+                outputDatasets,
+                '输出速度', 
+                '输入长度', 
+                '输出速度（token/s）'
+            );
+        }
+
+        function drawLineChart(canvas, datasets, title, xLabel, yLabel) {
+            canvas.width = 1000;
+            canvas.height = 500;
+
+            const cssWidth = 1000;
+            const cssHeight = 500;
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+            const titleTop = 15; 
+            const chartTop = 80; 
+            const chartBottom = 50; 
+            const chartLeft = 100; 
+            const chartRight = 100; 
+            const xLabelOffset = 15; 
+            const yLabelOffset = 15; 
+
+            const titleFont = 20; 
+            const xTickFont = 16; 
+            const yTickFont = 15; 
+            const xLabelFont = 16; 
+            const yLabelFont = 16; 
+            const dataPointFont = 15; 
+
+            const yTickCount = 5; 
+
+            const chartWidth = cssWidth - chartLeft - chartRight;
+            const chartHeight = cssHeight - chartTop - chartBottom;
+
+            const allXData = [];
+            datasets.forEach(ds => {
+                ds.xData.forEach(x => allXData.push(x));
+            });
+            const uniqueXData = [...new Set(allXData)].sort((a, b) => a - b);
+            
+            const chartXStart = chartLeft;
+            const chartXEnd = chartLeft + chartWidth;
+            const xTicks = [0, ...uniqueXData];
+            const xTickCount = xTicks.length;
+
+            function getX(value) {
+                const index = xTicks.indexOf(value);
+                if (index === -1 || xTickCount <= 1) return chartXStart;
+                return chartXStart + (chartWidth / (xTickCount - 1)) * index;
+            }
+
+            let allYData = [];
+            datasets.forEach(ds => {
+                ds.data.forEach(val => {
+                    const numVal = parseFloat(val);
+                    if (!isNaN(numVal)) allYData.push(numVal);
+                });
+            });
+
+            const chartYStart = chartTop + chartHeight;
+            const chartYEnd = chartTop;
+            let yMax = allYData.length > 0 ? Math.max(...allYData) : 0;
+            yMax = getNiceMaxValue(yMax);
+
+            const yTicks = [];
+            for (let i = 0; i < yTickCount; i++) {
+                yTicks.push((yMax / (yTickCount - 1)) * i);
+            }
+
+            function getNiceMaxValue(max) {
+                if (max <= 0) return 1;
+                const exp = Math.floor(Math.log10(max));
+                const base = Math.pow(10, exp);
+                let niceMax = base;
+                if (max > base) {
+                    if (max <= 2 * base) niceMax = 2 * base;
+                    else if (max <= 5 * base) niceMax = 5 * base;
+                    else niceMax = 10 * base;
+                }
+                return niceMax;
+            }
+
+            function getY(i) {
+                return chartYStart - (chartHeight / (yTickCount - 1)) * i;
+            }
+
+            function getYByValue(value) {
+                return chartYStart - (value / yMax) * chartHeight;
+            }
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, cssWidth, cssHeight);
+
+            ctx.font = `bold ${titleFont}px "Microsoft YaHei", "微软雅黑", sans-serif`;
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(title, cssWidth / 2, titleTop);
+
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < xTickCount; i++) {
+                const x = getX(xTicks[i]);
+                ctx.beginPath();
+                ctx.moveTo(x, chartYStart);
+                ctx.lineTo(x, chartYEnd);
+                ctx.stroke();
+            }
+            for (let i = 0; i < yTickCount; i++) {
+                const y = getY(i);
+                ctx.beginPath();
+                ctx.moveTo(chartXStart, y);
+                ctx.lineTo(chartXEnd, y);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(chartXStart, chartYStart);
+            ctx.lineTo(chartXEnd, chartYStart);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(chartXStart, chartYStart);
+            ctx.lineTo(chartXStart, chartYEnd);
+            ctx.stroke();
+
+            ctx.font = `${xTickFont}px "Microsoft YaHei", "微软雅黑", sans-serif`;
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            for (let i = 0; i < xTickCount; i++) {
+                const x = getX(xTicks[i]);
+                ctx.beginPath();
+                ctx.moveTo(x, chartYStart);
+                ctx.lineTo(x, chartYStart + 8);
+                ctx.stroke();
+                ctx.fillText(xTicks[i], x, chartYStart + 12);
+            }
+
+            ctx.font = `${yTickFont}px "Microsoft YaHei", "微软雅黑", sans-serif`;
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i < yTickCount; i++) {
+                const y = getY(i);
+                ctx.beginPath();
+                ctx.moveTo(chartXStart - 8, y);
+                ctx.lineTo(chartXStart, y);
+                ctx.stroke();
+                ctx.fillText(yTicks[i].toFixed(2), chartXStart - 12, y);
+            }
+
+            ctx.font = `bold ${xLabelFont}px "Microsoft YaHei", "微软雅黑", sans-serif`;
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(xLabel, chartXEnd + xLabelOffset, chartYStart);
+
+            ctx.font = `bold ${yLabelFont}px "Microsoft YaHei", "微软雅黑", sans-serif`;
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(yLabel, chartXStart, chartYEnd - yLabelOffset - yLabelFont);
+
+            const pointsByX = {};
+            datasets.forEach((dataset, dsIndex) => {
+                dataset.xData.forEach((xVal, i) => {
+                    const numY = parseFloat(dataset.data[i]);
+                    if (isNaN(numY)) return;
+                    
+                    if (!pointsByX[xVal]) {
+                        pointsByX[xVal] = [];
+                    }
+                    pointsByX[xVal].push({
+                        dsIndex: dsIndex,
+                        xVal: xVal,
+                        yVal: numY,
+                        color: dataset.color,
+                        canvasY: getYByValue(numY)
+                    });
+                });
+            });
+
+            for (const xVal in pointsByX) {
+                pointsByX[xVal].sort((a, b) => b.yVal - a.yVal);
+            }
+
+            datasets.forEach((dataset, dsIndex) => {
+                ctx.strokeStyle = dataset.color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                let hasStarted = false;
+                for (let i = 0; i < dataset.xData.length; i++) {
+                    const xVal = dataset.xData[i];
+                    const yVal = dataset.data[i];
+                    const numY = parseFloat(yVal);
+                    
+                    if (isNaN(numY)) continue;
+
+                    const x = getX(xVal);
+                    const y = getYByValue(numY);
+
+                    if (!hasStarted) {
+                        ctx.moveTo(x, y);
+                        hasStarted = true;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+
+                for (let i = 0; i < dataset.xData.length; i++) {
+                    const xVal = dataset.xData[i];
+                    const yVal = dataset.data[i];
+                    const numY = parseFloat(yVal);
+
+                    if (isNaN(numY)) continue;
+
+                    const x = getX(xVal);
+                    const y = getYByValue(numY);
+
+                    ctx.save();
+                    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+                    ctx.shadowBlur = 6;
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.restore();
+
+                    ctx.strokeStyle = dataset.color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                    ctx.stroke();
+
+                    ctx.fillStyle = dataset.color;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            });
+
+            datasets.forEach((dataset, dsIndex) => {
+                for (let i = 0; i < dataset.xData.length; i++) {
+                    const xVal = dataset.xData[i];
+                    const yVal = dataset.data[i];
+                    const numY = parseFloat(yVal);
+
+                    if (isNaN(numY)) continue;
+
+                    const x = getX(xVal);
+                    const y = getYByValue(numY);
+
+                    const pointsAtX = pointsByX[xVal] || [];
+                    
+                    let labelOffset = 12;
+                    let textBaseline = 'bottom';
+                    
+                    if (pointsAtX.length > 1) {
+                        const highestPoint = pointsAtX[0];
+                        const lowestPoint = pointsAtX[pointsAtX.length - 1];
+                        
+                        if (dsIndex === highestPoint.dsIndex && numY === highestPoint.yVal) {
+                            labelOffset = 12;
+                            textBaseline = 'bottom';
+                        } else if (dsIndex === lowestPoint.dsIndex && numY === lowestPoint.yVal) {
+                            labelOffset = 12;
+                            textBaseline = 'top';
+                        } else {
+                            textBaseline = 'bottom';
+                            labelOffset = 12;
+                        }
+                    }
+
+                    ctx.font = `bold ${dataPointFont}px "Microsoft YaHei", "微软雅黑", sans-serif`;
+                    ctx.fillStyle = dataset.color;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = textBaseline;
+                    
+                    if (textBaseline === 'bottom') {
+                        ctx.fillText(numY.toFixed(2), x, y - labelOffset);
+                    } else {
+                        ctx.fillText(numY.toFixed(2), x, y + labelOffset);
+                    }
+                }
+            });
+        }
+
+        function clearChart() {
+            [prefillChartCanvas, outputChartCanvas].forEach(canvas => {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+        }
+
+        function downloadChart() {
+            if (!checkTestData('下载')) return;
+
+            const title = getTitle();
+            const summaryInfoText = getSummaryInfoText();
+            const testStartTimeText = getTestStartTimeText();
+
+            const prefillCanvas = prefillChartCanvas;
+            const outputCanvas = outputChartCanvas;
+
+            const titleFontSize = 36;
+            const titleLineHeight = 36;
+            const titlePadding = 24;
+
+            const infoFontSize = 15;
+            const infoLineHeight = 30;
+            const infoPadding = 20;
+
+            const titleHeight = titlePadding + titleLineHeight + titlePadding;
+            const infoHeight = infoPadding + summaryInfoText.length * infoLineHeight + infoPadding;
+            const timeHeight = testStartTimeText.length * infoLineHeight;
+            const specInfoValue = document.getElementById('specInfo') ? document.getElementById('specInfo').value.trim() : '';
+            const specInfoHeight = specInfoValue ? infoLineHeight : 0;
+            const headHeight = titleHeight + infoHeight + timeHeight + specInfoHeight;
+
+            const width = Math.max(prefillCanvas.width, outputCanvas.width);
+            const height = headHeight + prefillCanvas.height + outputCanvas.height;
+
+            const combinedCanvas = document.createElement('canvas');
+            combinedCanvas.width = width;
+            combinedCanvas.height = height;
+            const ctx = combinedCanvas.getContext('2d');
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.font = `bold ${titleFontSize}px "Microsoft YaHei", "微软雅黑", sans-serif`;
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(title, width / 2, titlePadding);
+
+            ctx.font = `bold ${infoFontSize}px "Microsoft YaHei", "微软雅黑", sans-serif`;
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            let y = titleHeight + infoPadding;
+            summaryInfoText.forEach(line => {
+                ctx.fillText(line, infoPadding, y);
+                y += infoLineHeight;
+            });
+
+            testStartTimeText.forEach(line => {
+                ctx.fillText(line, infoPadding, y);
+                y += infoLineHeight;
+            });
+
+            const specInfoValueChart = document.getElementById('specInfo') ? document.getElementById('specInfo').value.trim() : '';
+            if (specInfoValueChart) {
+                ctx.fillText(`# Spec Decoding: ${specInfoValueChart}`, infoPadding, y);
+                y += infoLineHeight;
+            }
+
+            ctx.drawImage(prefillCanvas, 0, headHeight);
+            ctx.drawImage(outputCanvas, 0, headHeight + prefillCanvas.height);
+
+            const imageDataUrl = combinedCanvas.toDataURL('image/png');
+            const baseName = getExportBaseName();
+            downloadFile(imageDataUrl, `${baseName}.png`, 'image/png');
+        }
+
+        function downloadCsv() {
+            if (!checkTestData('下载')) return;
+
+            let csvContent = getTestReportHeader();
+            csvContent += '\n' + getCsvColumnHeader() + '\n';
+
+            testResults.forEach(row => {
+                csvContent += `${row.inputLength},${row.prefillTime},${row.prefillSpeed},${row.outputLength},${row.outputTime},${row.outputSpeed}\n`;
+            });
+
+            const baseName = getExportBaseName();
+            downloadFile(csvContent, `${baseName}.csv`, 'text/csv');
+        }
+
+        function downloadMarkdown() {
+            if (!checkTestData('下载')) return;
+
+            let markdownContent = getTestReportHeader();
+            markdownContent += '\n' + getMarkdownColumnHeader() + '\n';
+            markdownContent += '|---:|---:|---:|---:|---:|---:|\n';
+
+            testResults.forEach(row => {
+                markdownContent += `| ${row.inputLength} | ${row.prefillTime} | ${row.prefillSpeed} | ${row.outputLength} | ${row.outputTime} | ${row.outputSpeed} |\n`;
+            });
+
+            const baseName = getExportBaseName();
+            downloadFile(markdownContent, `${baseName}.md`, 'text/markdown');
+        }
+
+        function checkTestData(operationName) {
+            if (testResults.length === 0) {
+                showAlert(`没有数据可以${operationName}。`);
+                return false;
+            }
+            return true;
+        }
+
+        function getTestReportHeader() {
+            let header = getTitle() + '\n\n';
+            getSummaryInfoText().forEach(line => {
+                header += line + '\n';
+            });
+            getTestStartTimeText().forEach(line => {
+                header += line + '\n';
+            });
+            const specInfoValue = document.getElementById('specInfo') ? document.getElementById('specInfo').value.trim() : '';
+            if (specInfoValue) {
+                header += `# Spec Decoding: ${specInfoValue}\n`;
+            }
+            return header;
+        }
+
+        function getTitle() {
+            return '本地大语言模型推理性能测试结果';
+        }
+
+        function getSummaryInfoText() {
+            const fields = ['processor', 'mainboard', 'memory', 'gpu', 'system', 'engineName', 'engineModelName'];
+            return fields.map(fieldId => {
+                const label = getFieldLabel(fieldId);
+                const value = getFieldValue(fieldId);
+                return `${label}${value}`;
+            });
+        }
+
+        function getTestStartTimeText() {
+            const year = testStartTime.getFullYear();
+            const month = String(testStartTime.getMonth() + 1).padStart(2, '0');
+            const day = String(testStartTime.getDate()).padStart(2, '0');
+            const hours = String(testStartTime.getHours()).padStart(2, '0');
+            const minutes = String(testStartTime.getMinutes()).padStart(2, '0');
+            const seconds = String(testStartTime.getSeconds()).padStart(2, '0');
+            return [`测试时间：${year} 年 ${month} 月 ${day} 日 ${hours} 时 ${minutes} 分 ${seconds} 秒`];
+        }
+
+        function getExportBaseName() {
+            const gpu = getFieldValue('gpu', 'gpu');
+            const engineName = getFieldValue('engineName', 'engine');
+            const engineModelName = getFieldValue('engineModelName', 'model');
+
+            const safe = s => s.replace(/\s+/g, '_').replace(/[^\w\-\.]/g, '');
+
+            let timeText = '';
+            if (testStartTime) {
+                const year = testStartTime.getFullYear();
+                const month = String(testStartTime.getMonth() + 1).padStart(2, '0');
+                const day = String(testStartTime.getDate()).padStart(2, '0');
+                const hours = String(testStartTime.getHours()).padStart(2, '0');
+                const minutes = String(testStartTime.getMinutes()).padStart(2, '0');
+                const seconds = String(testStartTime.getSeconds()).padStart(2, '0');
+                timeText = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+            }
+
+            return `${safe(gpu)},${safe(engineName)},${safe(engineModelName)},${timeText}`;
+        }
+
+        function getCsvColumnHeader() {
+            return '输入长度，预填充耗时（ms）, 预填充速度（token/s）, 输出长度，输出耗时（ms）, 输出速度（token/s）';
+        }
+
+        function getMarkdownColumnHeader() {
+            return '| 输入长度 | 预填充耗时（ms） | 预填充速度（token/s） | 输出长度 | 输出耗时（ms） | 输出速度（token/s） |';
+        }
+
+        function updateSummaryDisplay() {
+            const serverFields = ['processor', 'mainboard', 'memory', 'gpu', 'system'];
+            const engineFields = ['engineName', 'engineModelName'];
+
+            const serverInfo = serverFields.map(fieldId => {
+                const label = getFieldLabel(fieldId);
+                const value = getFieldValue(fieldId);
+                return `${label}${value}`;
+            }).join('，') + '。';
+
+            const engineInfo = engineFields.map(fieldId => {
+                const label = getFieldLabel(fieldId);
+                const value = getFieldValue(fieldId);
+                return `${label}${value}`;
+            }).join('，') + '。';
+
+            summaryDisplayEl.innerHTML = `<div>${serverInfo}</div><div>${engineInfo}</div>`;
+        }
+
+        function getFieldLabel(fieldId) {
+            return document.querySelector(`label[for="${fieldId}"]`).textContent;
+        }
+
+        function getFieldValue(fieldId, defaultValue = '无') {
+            return document.getElementById(fieldId).value || defaultValue;
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const link = document.createElement('a');
+
+            if (content.startsWith('data:')) {
+                link.href = content;
+            } else {
+                link.href = `data:${mimeType};charset=utf-8,` + encodeURIComponent(content);
+            }
+
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showDetail(inputLength, systemPrompt, systemPromptLength, userPrompt, userPromptLength, output, outputLength, actualOutputTokens, ttft) {
+            document.body.style.overflow = 'hidden';
+
+            const detailOverlay = document.createElement('div');
+            detailOverlay.className = 'detail-overlay';
+
+            const detailDialog = document.createElement('div');
+            detailDialog.className = 'detail-dialog';
+
+            const actualTokensDisplay = (actualOutputTokens !== undefined && actualOutputTokens !== null) ? actualOutputTokens : 'N/A';
+            const ttftDisplay = (ttft !== undefined && ttft !== null) ? ttft : 'N/A';
+
+            detailDialog.innerHTML = `
+                <div class="detail-header">
+                    <div class="detail-title">详细信息</div>
+                    <button type="button" class="detail-close-button">关闭</button>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-field">
+                    <div class="detail-field-label">输入长度：</div>
+                    <span class="detail-field-content">${inputLength}</span>
+                  </div>
+                  <div class="detail-field">
+                    <div class="detail-field-label">系统提示词长度：</div>
+                    <span class="detail-field-content">${systemPromptLength}</span>
+                  </div>
+                  <div class="detail-field">
+                    <div class="detail-field-label">用户提示词长度：</div>
+                    <span class="detail-field-content">${userPromptLength}</span>
+                  </div>
+                  <div class="detail-field">
+                    <div class="detail-field-label">接收到的输出长度：</div>
+                    <span class="detail-field-content">${outputLength}</span>
+                  </div>
+                  <div class="detail-field">
+                    <div class="detail-field-label">真实Token数：</div>
+                    <span class="detail-field-content">${actualTokensDisplay}</span>
+                  </div>
+                  <div class="detail-field">
+                    <div class="detail-field-label">TTFT（ms）：</div>
+                    <span class="detail-field-content">${ttftDisplay}</span>
+                  </div>
+                </div>
+                <div class="detail-block">
+                    <div class="detail-block-label">系统提示词：</div>
+                    <div class="detail-block-content system-prompt-block">${systemPrompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                </div>
+                <div class="detail-block">
+                    <div class="detail-block-label">用户提示词：</div>
+                    <div class="detail-block-content user-prompt-block">${userPrompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                </div>
+                <div class="detail-block">
+                    <div class="detail-block-label">接收到的输出内容：</div>
+                    <div class="detail-block-content output-block">${output.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                </div>
+            `;
+
+            detailOverlay.appendChild(detailDialog);
+            document.documentElement.appendChild(detailOverlay);
+
+            const detailCloseBtn = detailDialog.querySelector('.detail-close-button');
+            detailCloseBtn.addEventListener('click', () => {
+                detailOverlay.remove();
+                document.body.style.overflow = '';
+            });
+
+            detailOverlay.addEventListener('click', (e) => {
+                if (e.target === detailOverlay) {
+                    detailOverlay.remove();
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        function showAlert(message, title = '提示') {
+            if (document.querySelector('.alert-overlay')) {
+                return;
+            }
+
+            document.body.style.overflow = 'hidden';
+
+            const alertOverlay = document.createElement('div');
+            alertOverlay.className = 'alert-overlay';
+
+            const alertDialog = document.createElement('div');
+            alertDialog.className = 'alert-dialog';
+
+            alertDialog.innerHTML = `
+                <div class="alert-header">
+                    <div class="alert-title">${title}</div>
+                </div>
+                <div class="alert-content">${message}</div>
+                <div>
+                    <button type="button" class="alert-confirm-button">确定</button>
+                </div>
+            `;
+
+            alertOverlay.appendChild(alertDialog);
+            document.documentElement.appendChild(alertOverlay);
+
+            const alertConfirmBtn = alertDialog.querySelector('.alert-confirm-button');
+            alertConfirmBtn.addEventListener('click', () => {
+                alertOverlay.remove();
+                document.body.style.overflow = '';
+            });
+
+            alertOverlay.addEventListener('click', (e) => {
+                if (e.target === alertOverlay) {
+                    alertOverlay.remove();
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        function saveLastTestResults(results) {
+            try {
+                localStorage.setItem('lastTestResults', JSON.stringify(results));
+                lastTestResults = results;
+                console.log('基准已保存:', results.length, '条数据');
+            } catch (e) {
+                console.error("保存上次测试结果失败", e);
+                showAlert("缓存上次测试结果失败，可能是浏览器存储空间不足。", "警告");
+            }
+        }
+
+        function getLastTestResults() {
+            try {
+                const saved = localStorage.getItem('lastTestResults');
+                return saved ? JSON.parse(saved) : [];
+            } catch (e) {
+                console.error("读取上次测试结果失败", e);
+                return [];
+            }
+        }
+    </script>
+</body>
+
+</html>
